@@ -11,10 +11,11 @@ type Client struct {
 }
 
 type Server struct {
-	Port        int
-	clients     []*Client
-	mu          sync.Mutex
-	MessageChan chan string
+	Port         int
+	clients      []*Client
+	mu           sync.Mutex
+	MessageChan  chan string
+	UdpBroadcast string
 }
 
 func (s *Server) handleConnection(conn net.Conn) {
