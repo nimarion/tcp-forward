@@ -14,7 +14,7 @@ type Server struct {
 	Port         int
 	clients      []*Client
 	mu           sync.Mutex
-	MessageChan  chan string
+	MessageChan  chan []byte
 	UdpBroadcast string
 }
 
@@ -72,6 +72,7 @@ func (s *Server) Start() {
 			fmt.Printf("Error accepting connection on port %d: %s\n", s.Port, err)
 			continue
 		}
+		fmt.Printf("Accepted connection from %s\n", conn.RemoteAddr().String())
 		// Handle connection asynchronously
 		go s.handleConnection(conn)
 	}

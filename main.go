@@ -12,7 +12,7 @@ import (
 	"github.com/nimarion/tcp-forward/server"
 )
 
-func BroadcastUDP(message string, broadcastAddress string, broadcastPort int) error {
+func BroadcastUDP(data []byte, broadcastAddress string, broadcastPort int) error {
 	// Resolve the UDP address
 	udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", broadcastAddress, broadcastPort))
 	if err != nil {
@@ -25,10 +25,6 @@ func BroadcastUDP(message string, broadcastAddress string, broadcastPort int) er
 		return err
 	}
 	defer conn.Close()
-
-	// Convert message to byte slice
-	data := []byte(message)
-
 	// Send the message to the broadcast address
 	_, err = conn.Write(data)
 	if err != nil {
@@ -38,7 +34,7 @@ func BroadcastUDP(message string, broadcastAddress string, broadcastPort int) er
 	return nil
 }
 
-func connectToServer(addr string, messageChan chan string, udpBroadcast string) {
+func connectToServer(addr string, messageChan chan []byte, udpBroadcast string) {
 	broadcastAddress := ""
 	broadcastPort := 0
 
@@ -73,16 +69,13 @@ func connectToServer(addr string, messageChan chan string, udpBroadcast string) 
 				break
 			}
 
-			message := ""
 			for i := 0; i < n; i++ {
-
-				message += string(buffer[i])
 				if buffer[i] == 0 {
-					messageChan <- message
+					messageChan <- buffer
 					if len(udpBroadcast) != 0 {
-						BroadcastUDP(message, broadcastAddress, broadcastPort)
+						BroadcastUDP(buffer, broadcastAddress, broadcastPort)
 					}
-					message = ""
+					buffer = make([]byte, 1024)
 					break
 				}
 			}
@@ -158,7 +151,7 @@ func main() {
 	servers := make([]*server.Server, len(serverPorts))
 	for i, port := range serverPorts {
 		// check if client has UDP port
-		servers[i] = &server.Server{Port: port, MessageChan: make(chan string)}
+		servers[i] = &server.Server{Port: port, MessageChan: make(chan []byte)}
 		go servers[i].Start()
 	}
 
